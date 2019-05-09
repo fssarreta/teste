@@ -1,27 +1,28 @@
 version: "3.7"
 services:
 
+    mongo:
+        image: mongo
+        ports:
+            - "27017:27017"
+        container_name: mongo
+
     kafka:
         image: spotify/kafka
         ports:
             - "2181:2181"
             - "9092:9092"
-        hostname: kafka
         container_name: kafka
         environment:
-            - "ADVERTISED_HOST=kafka"
+            - "ADVERTISED_HOST=localhost"
             - "ADVERTISED_PORT=9092"
-            - "AUTO_CREATE_TOPICS=true"
-        command: >
-            bash -c
-            "(sleep 15s &&
-            /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh
-            --create
-            --zookeeper
-            localhost:2181 --replication-factor 1 --partitions 1
-            --topic test &) && (supervisord -n)"
 
-    mongo:
-        image: mongo
-        ports:
-            - "27017:27017"
+    kafka_producer:
+        image: spotify/kafka
+        container_name: kafka_producer
+        command: /bin/bash -c "$$KAFKA_HOME/bin/kafka-console-producer.sh --broker-list 172.17.0.2:9092 --topic test"
+
+    kafka_consumer:
+        image: spotify/kafka
+        container_name: kafka_consumer
+        command: /bin/bash -c "$$KAFKA_HOME/bin/kafka-console-consumer.sh --zookeeper 172.17.0.2:2181 --topic test"
